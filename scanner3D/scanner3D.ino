@@ -1,29 +1,51 @@
 #include <Stepper.h> 
 #include <Servo.h>
+#include <SoftwareSerial.h>
 
-Servo myservo;  // create servo object to control a servo
 int angleMin = 0;
 int angleMax = 90;
 int numberPhotos = 0;
-
-//Steps per Revolution = 360/ step angle <=> (360 / 1.8 ) = 200 Steps Per Revolution
-#define STEPS 200
+#define STEPS 160000/2
 #define motorInterfaceType 1 //Type1 because the motor is connected through the driver module
-// Define stepper motor connections and motor interface type. Motor interface type must be set to 1 when using a driver
-Stepper stepper(STEPS, 2, 3); // Pin 2 connected to DIRECTION & Pin 3 connected to STEP Pin of Driver
-int numberStep = numberPhotos;
+
+Stepper stepper(STEPS, 5, 2); // Pin 2 connected to DIRECTION & Pin 3 connected to STEP Pin of Driver
+Servo myservo;  // create servo object to control a servo
+SoftwareSerial ArduinoMaster(2, 3);
+
+String msg;
 
 
 void setup() { 
     // Set the maximum speed in steps per second:
-    stepper.setSpeed(1000);
-    myservo.attach(9);  // attaches the servo on pin 9 to the servo object
-    myservo.write(angleMin);              //angle 0°
-    //set original position of servo 
+    stepper.setSpeed(5);
+    myservo.attach(11);  
+    pinMode(13, OUTPUT); //relay
+    Serial.begin(9600); 
+    ArduinoMaster.begin(9600);
 }
 void loop()
 {
+    int numberPhotos = readSerialPort().toInt();
+    stepper.step(STEPS/numberPhotos);
+    delay(500);
+    digitalWrite(13, HIGH);
     myservo.write(angleMax);
-    delay(15);
-    stepper.step(numberStep);
+    delay(5000);
+    myservo.write(angleMin);
+    delay(1000);
+    digitalWrite(13, LOW);
+}
+
+String readSerialPort() 
+{
+    while (ArduinoMaster.available()) 
+    {
+        delay(10);
+        if (ArduinoMaster.available() > 0) {
+            char c = ArduinoMaster.read();  //gets one byte from serial buffer
+            msg += c; //makes the string readString
+            return msg;
+        }
+    }
+    ArduinoMaster.flush();
 }
