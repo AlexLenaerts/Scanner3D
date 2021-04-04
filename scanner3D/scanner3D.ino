@@ -13,8 +13,8 @@ Servo myservo;  // create servo object to control a servo
 SoftwareSerial ArduinoMaster(2, 3);
 
 String msg;
-
-
+bool confirm = false;
+int numberPhotos = 0;
 void setup() { 
     // Set the maximum speed in steps per second:
     stepper.setSpeed(5);
@@ -25,15 +25,22 @@ void setup() {
 }
 void loop()
 {
-    int numberPhotos = readSerialPort().toInt();
-    stepper.step(STEPS/numberPhotos);
-    delay(500);
-    digitalWrite(13, HIGH);
-    myservo.write(angleMax);
-    delay(5000);
-    myservo.write(angleMin);
-    delay(1000);
-    digitalWrite(13, LOW);
+    if(!confirm)
+    {
+        numberPhotos = readSerialPort().toInt();
+        confirm = true;
+    }
+    else
+    {    
+        stepper.step(STEPS/numberPhotos);
+        delay(500);
+        digitalWrite(13, HIGH);
+        myservo.write(angleMax);
+        delay(5000);
+        myservo.write(angleMin);
+        delay(1000);
+        digitalWrite(13, LOW);
+    }
 }
 
 String readSerialPort() 
